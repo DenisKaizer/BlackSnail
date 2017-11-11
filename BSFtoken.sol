@@ -235,7 +235,7 @@ contract MintableToken is StandardToken, Ownable {
 
 }
 
-contract ABHCoin is MintableToken {
+contract BSFToken is MintableToken {
 
   string public constant name = "Black Snail Token";
 
