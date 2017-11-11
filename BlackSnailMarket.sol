@@ -17,6 +17,33 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+library SafeMath {
+
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract Ownable {
 
   address public owner;
@@ -36,15 +63,17 @@ contract Ownable {
   }
 }
 
-contract BlackSnailMarket {
+contract BlackSnailMarket is Ownable {
+
+  using SafeMath for uint;
 
   struct Asset {
-    address tokenAddress;
-    uint256 rate;
-    bool saleIsOn;
+  address tokenAddress;
+  uint256 rate;
+  bool saleIsOn;
   }
 
-  address BSFtokenAddress = 0x0;
+  address BSFtokenAddress = 0x264c52145b391b2010e30a0b5ee6e739e1bda3f2;
   ERC20 BSFtoken = ERC20(BSFtokenAddress);
 
   mapping (bytes32 => Asset) public tradableTokens;
@@ -67,17 +96,16 @@ contract BlackSnailMarket {
     tradableTokens[_ticker].saleIsOn = true;
   }
 
-  function changeRate(bytes32 _ticker, _rate) onlyOwner {
+  function changeRate(bytes32 _ticker, uint256 _rate) onlyOwner {
     tradableTokens[_ticker].rate = _rate;
   }
 
   function buyToken(bytes32 _ticker, uint256 amount) public {
     ERC20 token = ERC20(tradableTokens[_ticker].tokenAddress);
     require(token.balanceOf(this) >= amount);
-    uint256 valueBSF = amount.div(rate);
+    uint256 valueBSF = amount.div(tradableTokens[_ticker].rate);
     require(BSFtoken.balanceOf(msg.sender) >= valueBSF);
-    require(BSFtokenAddress.delegatecall(bytes4(keccak256(transfer(address, uint256))),this,valueBSF));
+    require(BSFtokenAddress.delegatecall(bytes4(keccak256("transfer(address, uint256)")),this,valueBSF));
     require(token.transfer(msg.sender, amount));
   }
-
 }
