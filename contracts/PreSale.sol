@@ -245,7 +245,6 @@ contract BSEToken is MintableToken {
 
   uint32 public constant decimals = 18;
 
-
   event Burn(address indexed burner, uint256 value);
 
   /**
@@ -318,7 +317,7 @@ contract FiatContract {
   function updatedAt(uint _id) constant returns (uint);
 }
 
-contract CrowdSale is Ownable, ReentrancyGuard, Stateful {
+contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   using SafeMath for uint;
 
@@ -337,7 +336,7 @@ contract CrowdSale is Ownable, ReentrancyGuard, Stateful {
 
   address multisig;
 
-  FiatContract public price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
+  FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
 
   modifier saleIsOn() {
     require((state == State.PreIco || state == State.ICO) &&(now < startICO + period || now < startPreICO + period));
@@ -373,7 +372,7 @@ contract CrowdSale is Ownable, ReentrancyGuard, Stateful {
 
   function startPreIco(uint256 _period) onlyOwner {
     startPreICO = now;
-    period = _period;
+    period = _period * day;
     setState(State.PreIco);
   }
 
@@ -384,7 +383,7 @@ contract CrowdSale is Ownable, ReentrancyGuard, Stateful {
 
   function startIco(uint256 _period) onlyOwner {
     startICO = now;
-    period = _period;
+    period = _period * day;
     setState(State.ICO);
   }
 
@@ -439,3 +438,7 @@ contract CrowdSale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
+
+
+
