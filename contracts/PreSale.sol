@@ -378,7 +378,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   function finishPreIco(uint256 _period) onlyOwner {
     setState(State.preIcoFinished);
-    multisig.transfer(this.balance);
+    bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    require(isSent);
   }
 
   function startIco(uint256 _period) onlyOwner {
@@ -389,7 +390,9 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   function finishICO() onlyOwner {
     setState(State.CrowdsaleFinished);
-    multisig.transfer(this.balance);
+    bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    require(isSent);
+    //token.finishMinting();
   }
 
   function getDouble() nonReentrant {
