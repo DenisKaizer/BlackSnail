@@ -345,13 +345,19 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   modifier isUnderHardCap() {
+    require(token.totalSupply() < getHardcap());
+    _;
+  }
+
+  function getHardcap() internal returns(uint256) {
     if (state == State.PreIco) {
-      require(token.totalSupply() < preICOTokenHardCap );
+      return preICOTokenHardCap;
     }
     else {
-      require(token.totalSupply() < ICOTokenHardCap);
+      if (state == State.ICO) {
+        return ICOTokenHardCap;
+      }
     }
-    _;
   }
 
 
@@ -360,7 +366,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   // for mint tokens to USD investor
-  function usdSale(address _to, uint _valueUSD) onlyOwner {
+  function usdSale(address _to, uint _valueUSD) onlyOwner  {
     uint256 valueCent = _valueUSD * 100;
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent += valueCent;
@@ -420,8 +426,9 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     uint256 priceUSD = price.USD(0);
     uint256 valueCent = valueWEI.div(priceUSD);
     uint256 tokens = rateCent.mul(valueCent);
-    if (token.totalSupply() + tokens > ICOTokenHardCap) {
-      tokens = ICOTokenHardCap.sub(token.totalSupply());
+    uint256 hardcap = getHardcap();
+    if (token.totalSupply() + tokens > hardcap) {
+      tokens = hardcap.sub(token.totalSupply());
       valueCent = tokens.div(rateCent);
       valueWEI = valueCent.mul(priceUSD);
       uint256 change = msg.value - valueWEI;
@@ -442,6 +449,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
 
 
 
