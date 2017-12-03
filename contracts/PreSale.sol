@@ -292,10 +292,12 @@ contract Stateful {
   enum State {
   Init,
   PreIco,
-  salePaused,
+  PreIcoPaused,
   preIcoFinished,
   ICO,
-  CrowdsaleFinished
+  salePaused,
+  CrowdsaleFinished,
+  companySold
   }
   State public state = State.Init;
 
@@ -320,7 +322,7 @@ contract FiatContract {
 contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   using SafeMath for uint;
-
+  
   mapping (address => uint) preICOinvestors;
   mapping (address => uint) ICOinvestors;
 
@@ -330,11 +332,11 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public period;
   uint256 public constant rateCent = 200000000000000000;
   uint256 public constant centSoftCap = 300000000;
-  uint256 public constant preICOTokenHardCap = 440000 * 1 ether;
-  uint256 public constant ICOTokenHardCap = 1980000 * 1 ether;
+  uint256 public constant preICOTokenHardCap = 4400 * 1 ether;
+  uint256 public constant ICOTokenHardCap = 19800 * 1 ether;
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
-
+ 
   address multisig;
 
   FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
@@ -379,12 +381,13 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function startPreIco(uint256 _period) onlyOwner {
+    require(state == State.Init || state == State.PreIcoPaused);
     startPreICO = now;
     period = _period * day;
     setState(State.PreIco);
   }
 
-  function finishPreIco(uint256 _period) onlyOwner {
+  function finishPreIco() onlyOwner {
     setState(State.preIcoFinished);
     bool isSent = multisig.call.gas(3000000).value(this.balance)();
     require(isSent);
@@ -412,7 +415,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
       ICOinvestors[msg.sender] = extraTokensAmount;
     }
     else {
-      if (state == State.CrowdsaleFinished) {
+      if (state == State.companySold) {
         extraTokensAmount = preICOinvestors[msg.sender] + ICOinvestors[msg.sender];
         preICOinvestors[msg.sender] = 0;
         ICOinvestors[msg.sender] = 0;
@@ -439,10 +442,10 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     token.mint(msg.sender, tokens);
     collectedCent += valueCent;
     if (state == State.PreIco) {
-      preICOinvestors[msg.sender] = tokens;
+      preICOinvestors[msg.sender] += tokens;
     }
     else {
-      ICOinvestors[msg.sender] = tokens;
+      ICOinvestors[msg.sender] += tokens;
     }
   }
 
