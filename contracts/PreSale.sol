@@ -1,6 +1,6 @@
 pragma solidity ^0.4.17;
 
-pragma solidity ^0.4.17;
+
 
 /**
  * @title ERC20Basic
@@ -361,7 +361,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
 
-  function Crowdsale(address _tokenAddress) {
+  function Crowdsale(address _tokenAddress,address _multisig) {
+    multisig = _multisig;
     token = BSEToken(_tokenAddress);
   }
 
@@ -449,6 +450,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
 
 
 
