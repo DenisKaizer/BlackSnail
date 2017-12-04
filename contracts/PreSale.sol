@@ -367,6 +367,10 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     multisig = _multisig;
     token = BSEToken(_tokenAddress);
   }
+  function startCompanySell() {
+    require(state== State.CrowdsaleFinished);
+    setState(State.companySold); 
+  }
 
   // for mint tokens to USD investor
   function usdSale(address _to, uint _valueUSD) onlyOwner  {
@@ -380,7 +384,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     setState(State.salePaused);
   }
 
-  function startPreIco() onlyOwner {
+  function startPreIco(uint256 _period) onlyOwner {
     require(state == State.Init || state == State.PreIcoPaused);
     startPreICO = now;
     period = _period * day;
@@ -402,11 +406,13 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   function finishICO() onlyOwner {
     setState(State.CrowdsaleFinished);
     bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    //TODO add finishMinting
     require(isSent);
-    //token.finishMinting();
+    token.finishMinting();
   }
 
   function getDouble() nonReentrant {
+    require (state == State.ICO || state == State.companySold);
     uint256 extraTokensAmount;
     if (state == State.ICO) {
       extraTokensAmount = preICOinvestors[msg.sender];
@@ -453,6 +459,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
 
 
 
