@@ -319,8 +319,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public period;
   uint256 public constant rateCent = 200000000000000000;
   uint256 public constant centSoftCap = 300000000;
-  uint256 public constant preICOTokenHardCap = 4400 * 1 ether;
-  uint256 public constant ICOTokenHardCap = 19800 * 1 ether;
+  uint256 public constant preICOTokenHardCap = 440000 * 1 ether;
+  uint256 public constant ICOTokenHardCap = 1980000 * 1 ether;
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
  
