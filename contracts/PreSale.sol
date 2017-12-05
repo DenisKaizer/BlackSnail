@@ -367,7 +367,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     multisig = _multisig;
     token = BSEToken(_tokenAddress);
   }
-  function startCompanySell() {
+  function startCompanySell() onlyOwner {
     require(state== State.CrowdsaleFinished);
     setState(State.companySold); 
   }
