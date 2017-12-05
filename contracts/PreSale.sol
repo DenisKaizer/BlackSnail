@@ -390,8 +390,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     period = _period * day;
     setState(State.ICO);
   }
-19800000000000000000000
-7478400000000000000000
+
   function finishICO() onlyOwner {
     setState(State.CrowdsaleFinished);
     bool isSent = multisig.call.gas(3000000).value(this.balance)();
