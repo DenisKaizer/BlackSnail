@@ -298,14 +298,6 @@ contract Stateful {
 }
 
 
-contract FiatContract {
-  function ETH(uint _id) constant returns (uint256);
-  function USD(uint _id) constant returns (uint256);
-  function EUR(uint _id) constant returns (uint256);
-  function GBP(uint _id) constant returns (uint256);
-  function updatedAt(uint _id) constant returns (uint);
-}
-
 contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   using SafeMath for uint;
@@ -323,10 +315,9 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public constant ICOTokenHardCap = 19800 * 1 ether;
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
+  uint256 priceUSD;
  
   address multisig;
-
-  FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
 
   modifier saleIsOn() {
     require((state == State.PreIco || state == State.ICO) &&(now < startICO + period || now < startPreICO + period));
@@ -427,7 +418,6 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   function mintTokens() payable saleIsOn isUnderHardCap nonReentrant {
     uint256 valueWEI = msg.value;
-    uint256 priceUSD = price.USD(0);
     uint256 valueCent = valueWEI.div(priceUSD);
     uint256 tokens = rateCent.mul(valueCent);
     uint256 hardcap = getHardcap();
