@@ -207,20 +207,7 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
-  modifier onlyCrowdsaleContract() {
-    require(crowdsaleContracts[msg.sender]);
-    _;
-  }
-
-  function addCrowdsaleContract(address _crowdsaleContract) onlyOwner {
-    crowdsaleContracts[_crowdsaleContract] = true;
-  }
-
-  function deleteCrowdsaleContract(address _crowdsaleContract) onlyOwner {
-    require(crowdsaleContracts[_crowdsaleContract]);
-    delete crowdsaleContracts[_crowdsaleContract];
-  }
-  function mint(address _to, uint256 _amount) onlyCrowdsaleContract canMint returns (bool) {
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
 
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
@@ -229,7 +216,7 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
-  function finishMinting() onlyCrowdsaleContract returns (bool) {
+  function finishMinting() onlyOwner returns (bool) {
     mintingFinished = true;
     MintFinished();
     return true;
@@ -326,7 +313,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   mapping (address => uint) preICOinvestors;
   mapping (address => uint) ICOinvestors;
 
-  BSEToken token;
+  BSEToken public token ;
   uint256 public startICO;
   uint256 public startPreICO;
   uint256 public period;
@@ -363,9 +350,10 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
 
-  function Crowdsale(address _tokenAddress,address _multisig) {
+  function Crowdsale(address _multisig) {
     multisig = _multisig;
-    token = BSEToken(_tokenAddress);
+    token = new BSEToken();
+    
   }
   function startCompanySell() onlyOwner {
     require(state== State.CrowdsaleFinished);
@@ -408,7 +396,13 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     bool isSent = multisig.call.gas(3000000).value(this.balance)();
     //TODO add finishMinting
     require(isSent);
-    token.finishMinting();
+    
+    //token.finishMinting();
+  }
+  function finishMinting() onlyOwner {
+    
+    token.finishMinting();  
+      
   }
 
   function getDouble() nonReentrant {
@@ -459,6 +453,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
 
 
 
