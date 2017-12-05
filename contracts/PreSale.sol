@@ -309,7 +309,7 @@ contract FiatContract {
 contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   using SafeMath for uint;
-  
+
   mapping (address => uint) preICOinvestors;
   mapping (address => uint) ICOinvestors;
 
@@ -317,13 +317,14 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public startICO;
   uint256 public startPreICO;
   uint256 public period;
-  uint256 public constant rateCent = 200000000000000000;
+  uint256 public constant rateCent = 2000000000000000;
   uint256 public constant centSoftCap = 300000000;
   uint256 public constant preICOTokenHardCap = 440000 * 1 ether;
-  uint256 public constant ICOTokenHardCap = 1980000 * 1 ether;
+  uint256 public constant ICOTokenHardCap = 1540000 * 1 ether;
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
- 
+  uint256 public soldTokens;
+
   address multisig;
 
   FiatContract public price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // mainnet 0x8055d0504666e2B6942BeB8D6014c964658Ca591 testnet 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909
@@ -334,7 +335,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   modifier isUnderHardCap() {
-    require(token.totalSupply() < getHardcap());
+    require(soldTokens < getHardcap());
     _;
   }
 
@@ -353,11 +354,11 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   function Crowdsale(address _multisig) {
     multisig = _multisig;
     token = new BSEToken();
-    
+
   }
   function startCompanySell() onlyOwner {
     require(state== State.CrowdsaleFinished);
-    setState(State.companySold); 
+    setState(State.companySold);
   }
 
   // for mint tokens to USD investor
@@ -366,6 +367,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent += valueCent;
     token.mint(_to, tokensAmount);
+    soldTokens += tokensAmount;
   }
 
   function pauseSale() onlyOwner {
@@ -380,6 +382,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function finishPreIco() onlyOwner {
+    require(state == State.PreIco);
     setState(State.preIcoFinished);
     bool isSent = multisig.call.gas(3000000).value(this.balance)();
     require(isSent);
@@ -392,17 +395,16 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function finishICO() onlyOwner {
+    require(state == State.ICO);
     setState(State.CrowdsaleFinished);
     bool isSent = multisig.call.gas(3000000).value(this.balance)();
-    //TODO add finishMinting
     require(isSent);
-    
-    //token.finishMinting();
+
   }
   function finishMinting() onlyOwner {
-    
-    token.finishMinting();  
-      
+
+    token.finishMinting();
+
   }
 
   function getDouble() nonReentrant {
@@ -412,7 +414,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
       extraTokensAmount = preICOinvestors[msg.sender];
       preICOinvestors[msg.sender] = 0;
       token.mint(msg.sender, extraTokensAmount);
-      ICOinvestors[msg.sender] = extraTokensAmount;
+      ICOinvestors[msg.sender] += extraTokensAmount;
     }
     else {
       if (state == State.companySold) {
@@ -431,8 +433,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     uint256 valueCent = valueWEI.div(priceUSD);
     uint256 tokens = rateCent.mul(valueCent);
     uint256 hardcap = getHardcap();
-    if (token.totalSupply() + tokens > hardcap) {
-      tokens = hardcap.sub(token.totalSupply());
+    if (soldTokens + tokens > hardcap) {
+      tokens = hardcap.sub(soldTokens);
       valueCent = tokens.div(rateCent);
       valueWEI = valueCent.mul(priceUSD);
       uint256 change = msg.value - valueWEI;
@@ -441,6 +443,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     }
     token.mint(msg.sender, tokens);
     collectedCent += valueCent;
+    soldTokens += tokens;
     if (state == State.PreIco) {
       preICOinvestors[msg.sender] += tokens;
     }
