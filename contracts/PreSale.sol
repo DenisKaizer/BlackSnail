@@ -375,6 +375,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function startPreIco(uint256 _period) onlyOwner {
+    require(_period != 0);
     require(state == State.Init || state == State.PreIcoPaused);
     startPreICO = now;
     period = _period * day;
@@ -389,6 +390,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function startIco(uint256 _period) onlyOwner {
+    require(_period != 0);
     startICO = now;
     period = _period * day;
     setState(State.ICO);
@@ -456,6 +458,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
 
 
 
