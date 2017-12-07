@@ -319,8 +319,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public period;
   uint256 public constant rateCent = 2000000000000000;
   uint256 public constant centSoftCap = 300000000;
-  uint256 public constant preICOTokenHardCap = 440000 * 1 ether; // 44 for tests
-  uint256 public constant ICOTokenHardCap = 1540000 * 1 ether; // 154 for tests
+  uint256 public constant preICOTokenHardCap = 44 * 1 ether;
+  uint256 public constant ICOTokenHardCap = 154 * 1 ether;
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
   uint256 public soldTokens;
@@ -389,7 +389,13 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function pauseSale() onlyOwner {
+    require(state == State.ICO);
     setState(State.salePaused);
+  }
+
+  function pausePreSale() onlyOwner {
+    require(state == State.PreIco);
+    setState(State.PreIcoPaused);
   }
 
   function startPreIco(uint256 _period, uint256 _priceUSD) onlyOwner {
