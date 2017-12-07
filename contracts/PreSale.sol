@@ -159,7 +159,6 @@ contract StandardToken is ERC20, BasicToken {
 contract Ownable {
 
   address public owner;
-  address public oracle;
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -320,8 +319,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public period;
   uint256 public constant rateCent = 2000000000000000;
   uint256 public constant centSoftCap = 300000000;
-  uint256 public constant preICOTokenHardCap = 440000 * 1 ether;
-  uint256 public constant ICOTokenHardCap = 1540000 * 1 ether;
+  uint256 public constant preICOTokenHardCap = 440000 * 1 ether; // 44 for tests
+  uint256 public constant ICOTokenHardCap = 1540000 * 1 ether; // 154 for tests
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
   uint256 public soldTokens;
@@ -396,6 +395,7 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   function startPreIco(uint256 _period, uint256 _priceUSD) onlyOwner {
     require(_period > 0);
     require(state == State.Init || state == State.PreIcoPaused);
+    priceUSD = _priceUSD;
     startPreICO = now;
     period = _period * day;
     setState(State.PreIco);
@@ -410,6 +410,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
   function startIco(uint256 _period, uint256 _priceUSD) onlyOwner {
     require(_period > 0);
+    require(state == State.PreIco || state == State.salePaused || state == State.preIcoFinished);
+    priceUSD = _priceUSD;
     startICO = now;
     period = _period * day;
     setState(State.ICO);
