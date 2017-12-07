@@ -186,16 +186,6 @@ contract Ownable {
     owner = newOwner;
   }
 
-  modifier onlyOwnerOrOracle() {
-    require(msg.sender == oracle || msg.sender == owner);
-    _;
-  }
-
-  function changeOracle(address _oracle) onlyOwner external {
-    require(_oracle != 0);
-    oracle = _oracle;
-  }
-
 }
 
 /**
@@ -339,6 +329,18 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
 
 
   address multisig;
+  address public oracle;
+
+
+  modifier onlyOwnerOrOracle() {
+    require(msg.sender == oracle || msg.sender == owner);
+    _;
+  }
+
+  function changeOracle(address _oracle) onlyOwner external {
+    require(_oracle != 0);
+    oracle = _oracle;
+  }
 
   modifier saleIsOn() {
     require((state == State.PreIco || state == State.ICO) &&(now < startICO + period || now < startPreICO + period));
@@ -478,6 +480,9 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
+
+
+
 
 
 
