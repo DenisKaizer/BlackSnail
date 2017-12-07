@@ -367,6 +367,11 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent += valueCent;
     token.mint(_to, tokensAmount);
+    if (state == State.ICO || state == State.preIcoFinished) {
+      ICOinvestors[_to] += tokensAmount;
+    } else {
+      preICOinvestors[_to] += tokensAmount;
+    }
     soldTokens += tokensAmount;
   }
 
