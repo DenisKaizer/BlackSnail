@@ -376,7 +376,13 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
   function pauseSale() onlyOwner {
+    require(state == State.ICO);
     setState(State.salePaused);
+  }
+
+  function pausePreSale() onlyOwner {
+    require(state == State.PreIco);
+    setState(State.PreIcoPaused);
   }
 
   function startPreIco(uint256 _period) onlyOwner {
