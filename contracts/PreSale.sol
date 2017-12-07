@@ -159,6 +159,7 @@ contract StandardToken is ERC20, BasicToken {
 contract Ownable {
 
   address public owner;
+  address public oracle;
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -183,6 +184,16 @@ contract Ownable {
   function transferOwnership(address newOwner) onlyOwner {
     require(newOwner != address(0));
     owner = newOwner;
+  }
+
+  modifier onlyOwnerOrOracle() {
+    require(msg.sender == oracle || msg.sender == owner);
+    _;
+  }
+
+  function changeOracle(address _oracle) onlyOwner external {
+    require(_oracle != 0);
+    oracle = _oracle;
   }
 
 }
@@ -324,7 +335,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   uint256 public collectedCent;
   uint256 day = 86400; // sec in day
   uint256 public soldTokens;
-  uint256 public priceUSD;
+  uint256 public priceUSD; // format 1 cent = priceUSD * wei
+
 
   address multisig;
 
@@ -350,7 +362,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
   }
 
 
-  function Crowdsale(address _multisig) {
+  function Crowdsale(address _multisig, uint256 _priceUSD) {
+    priceUSD = _priceUSD;
     multisig = _multisig;
     token = new BSEToken();
 
@@ -366,6 +379,11 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     uint256 tokensAmount = rateCent.mul(valueCent);
     collectedCent += valueCent;
     token.mint(_to, tokensAmount);
+    if (state == State.ICO || state == State.preIcoFinished) {
+      ICOinvestors[_to] += tokensAmount;
+    } else {
+      preICOinvestors[_to] += tokensAmount;
+    }
     soldTokens += tokensAmount;
   }
 
@@ -373,7 +391,8 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     setState(State.salePaused);
   }
 
-  function startPreIco(uint256 _period) onlyOwner {
+  function startPreIco(uint256 _period, uint256 _priceUSD) onlyOwner {
+    require(_period > 0);
     require(state == State.Init || state == State.PreIcoPaused);
     startPreICO = now;
     period = _period * day;
@@ -387,10 +406,15 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     require(isSent);
   }
 
-  function startIco(uint256 _period) onlyOwner {
+  function startIco(uint256 _period, uint256 _priceUSD) onlyOwner {
+    require(_period > 0);
     startICO = now;
     period = _period * day;
     setState(State.ICO);
+  }
+
+  function setPriceUSD(uint256 _priceUSD) onlyOwnerOrOracle {
+    priceUSD = _priceUSD;
   }
 
   function finishICO() onlyOwner {
@@ -454,10 +478,6 @@ contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
     mintTokens();
   }
 }
-
-
-
-
 
 
 
